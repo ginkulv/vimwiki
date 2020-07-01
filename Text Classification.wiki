@@ -240,10 +240,10 @@ TODO
 
 = Model Building =
 
-    The final step in the text classification framework is to train a
-    classifier using the features created in the previous step.
-    There are many different choices of machine learning models which 
-    can be used to train a final model:
+The final step in the text classification framework is to train a
+classifier using the features created in the previous step.
+There are many different choices of machine learning models which 
+can be used to train a final model:
 
     1. Naive Bayes Classifier
     2. Linear Classifier
@@ -259,7 +259,8 @@ TODO
         * Recurrent Convolutional Neural Network (RCNN)
         * Other Variants of Deep Neural Networks
 
-    This function will reduce amount of code
+This function will reduce amount of code
+
 {{{python
     def train_model(classifier, feature_vector_train, label, feature_vector_valid, is_neural_net=False):
         # fit the training dataset on the classifier
@@ -276,9 +277,9 @@ TODO
 
 == Naive Bayes ==
 
-    Naive Bayes is a classification technique based on Bayes’ Theorem 
-    with an assumption of independence among predictors.
-    
+Naive Bayes is a classification technique based on Bayes’ Theorem 
+with an assumption of independence among predictors.
+
 {{{python
     # Naive Bayes on Count Vectors
     accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_count, train_y, xvalid_count)
@@ -290,13 +291,13 @@ TODO
 
     # Naive Bayes on Ngram Level TF IDF Vectors
     accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
-    p# RF on Count Vectors
-accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_count, train_y, xvalid_count)
-print "RF, Count Vectors: ", accuracy
+    # RF on Count Vectors
+    accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_count, train_y, xvalid_count)
+    print "RF, Count Vectors: ", accuracy
 
-# RF on Word Level TF IDF Vectors
-accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_tfidf, train_y, xvalid_tfidf)
-print "RF, WordLevel TF-IDF: ", accuracyrint("NB, N-Gram Vectors: ", accuracy)
+    # RF on Word Level TF IDF Vectors
+    accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_tfidf, train_y, xvalid_tfidf)
+    print "RF, WordLevel TF-IDF: ", accuracyrint("NB, N-Gram Vectors: ", accuracy)
 
     # Naive Bayes on Character Level TF IDF Vectors
     accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf_ngram_chars, train_y, xvalid_tfidf_ngram_chars)
@@ -354,6 +355,60 @@ They are part of the tree based model family.
     print("RF, WordLevel TF-IDF: ", accuracy)
 }}}
 
+== Boosting Model ==
+
+Implementing Xtereme Gradient Boosting Model
+
+Boosting models are another type of ensemble models part of tree based models.
+Boosting is a machine learning ensemble meta-algorithm for primarily 
+reducing bias, and also variance in supervised learning, and a family of 
+machine learning algorithms that convert weak learners to strong ones.
+A *weak learner* is defined to be a classifier that is only slightly correlated 
+with the true classification (it can label examples better than random guessing)
+
+{{{python
+    # Extereme Gradient Boosting on Count Vectors
+    accuracy = train_model(xgboost.XGBClassifier(), xtrain_count.tocsc(), train_y, xvalid_count.tocsc())
+    print("Xgb, Count Vectors: ", accuracy)
+
+    # Extereme Gradient Boosting on Word Level TF IDF Vectors
+    accuracy = train_model(xgboost.XGBClassifier(), xtrain_tfidf.tocsc(), train_y, xvalid_tfidf.tocsc())
+    print("Xgb, WordLevel TF-IDF: ", accuracy)
+
+    # Extereme Gradient Boosting on Character Level TF IDF Vectors
+    accuracy = train_model(xgboost.XGBClassifier(), xtrain_tfidf_ngram_chars.tocsc(), train_y, xvalid_tfidf_ngram_chars.tocsc())
+    print("Xgb, CharLevel Vectors: ", accuracy)
+}}}
+
+== Shallow Neural Network ==
+
+== Deep Neural Network ==
+
+=== Convolutional Neural Network ===
+
+=== Recurrent Neural Network - LSTM ===
+
+=== Recurrent Neural Network - GRU ===
+
+=== Bidirectional RNN ===
+
+=== Recurrent Convolutional Neural Network ===
+
+= Improving Text Classification Models =
+
+Following are some tips to improve the performance 
+of text classification models and this framework:
+    1. *Text Cleaning*: text cleaning can help to reduce the noise present 
+    in text data in the form of stopwords, punctuations marks,
+    suffix variations etc.
+    2. *Hstacking Text/NLP features with text feature vectors*: In the feature 
+    engineering section, we generated a number of different feature vectors,
+    combining them together can help to improve the accuracy of the classifier.
+    3. *Hyperparamter Tuning in modelling*: Tuning the parameters is an 
+    important step, a number of parameters such as tree length, leafs,
+    network parameters etc. can be fine tuned to get a best fit model.
+    4. *Ensemble Models*: Stacking different models and blending their outputs
+    can help to further improve the results.
 
 = Sources =
 -  https://www.analyticsvidhya.com/blog/2018/04/a-comprehensive-guide-to-understand-and-implement-text-classification-in-python/
