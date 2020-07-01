@@ -1,0 +1,359 @@
+= Introduction =
+
+The goal of text classification is to automatically
+classify the text documents into one or more defined categories.
+
+An end-to-end text classification pipeline is composed of three main components:
+
+    1. Dataset Preparation: 
+    The first step is the Dataset Preparation step which includes the process 
+    of loading a dataset and performing basic pre-processing.
+    The dataset is then splitted into train and validation sets.
+    2. Feature Engineering: 
+    The next step is the Feature Engineering in which the raw dataset is 
+    transformed into flat features which can be used in a machine learning model.
+    This step also includes the process of creating new features from the existing data.
+    3. Model Training: 
+    The final step is the Model Building step in which a machine learning 
+    model is trained on a labelled dataset.
+    4. Improve Performance of Text Classifier
+
+= Data preparation =
+
+Required imports
+
+{{{python
+    from sklearn import model_selection, preprocessing, linear_model, naive_bayes, metrics, svm
+    from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+    from sklearn import decomposition, ensemble
+    import pandas, xgboost, numpy, textblob, string
+    from keras.preprocessing import text, sequence
+    from keras import layers, models, optimizers
+}}}
+
+In this example dataset of amazon reviews is used
+
+{{{python
+    # load the dataset
+    data = open('data/corpus').read()
+    labels, texts = [], []
+
+    for i, line in enumerate(data.split("\n")):
+        content = line.split()
+        labels.append(content[0])
+        texts.append(" ".join(content[1:]))
+        
+    # create a dataframe using text and labels
+    traingDF['text'] = texts
+    traingDF['label'] = labels
+}}}
+
+Next, we will split the dataset into training and validation sets,
+so that we can train and test classifier
+
+{{{python
+    # split the dataset into training and validation datasets
+    train_x, valid_x, train_y, valid_y = model_selection.train_test_split(trainDF['text'], trainDF['label'])
+    
+    # label encode the target variable
+    encoder = preprocessing.LabelEncoder()
+    train_y = encoder.fit_transform(train_y)
+    valid_y = encoder.fit_transform(valid_y)
+}}}
+
+= Feature Engineering =
+
+In this step, raw text data will be transformed into feature vectors
+and new features will be created using the existing dataset
+
+== Count Vectors as features ==
+
+*Count Vector* is a matrix notation of the dataset in which every
+row represents a document from the corpus, every column represents
+a term from the corpus, and every cell represents the frequency count
+of a particular term in a particular document
+
+{{{python
+    # create a count vectorizer object
+    count_vect = CountVectorizer(analyzer='word', token_pattern=r'\w{1,}'
+    count_vect.fit(trainDF['text'])
+    
+    # transform the training and validation data using count vectorizer object
+    xtrain_count = count_vect.transform(train_x)
+    xvalid_count = count_vect.transform(valid_x)
+}}}
+
+== TF-IDF Vectors as features ==
+
+*TF-IDF* score represents the relative importance of a term in 
+the document and the entire corpus. TF-IDF score is composed by
+two terms: the first computes the normalized *Term Frequency* (TF),
+the second term is the *Inverse Document Frequency* (IDF)
+
+        Number of times term t appears in a document
+TF(t) = --------------------------------------------
+           Total number of terms in the document
+         
+                      
+                      Total number of documents
+IDF(t) = log_e(----------------------------------------)
+                Number of documents where term t in it
+
+
+TF-IDF vectors can be generated at different levels of input
+tokens (words, characters, n-grams)
+
+a) *Word Level TF-IDF*: matrix representing tf-idf scorers of 
+   every term in different documents
+   
+{{{python
+   tfidf_vect = TfidfVectorizer(analyzer='word', token_pattern=r'\w{1,}', max_features=5000)
+   tfidf_vect.fit(trainDF['text'])
+   xtrain_tfidf = tfidf_vect.transform(train_x)
+   xvalid_tfidf = tfidf_vect.transform(valid_x)
+}}}
+
+b) *N-gram Level TF-IDF*: N-grams are the combination 
+   of N terms together.
+
+{{{python
+   tfidf_vect_ngram = TfidfVectorizer(analyzer='word', token_pattern=r'\w{1,}', ngram_range=(2,3), max_features=5000)
+   tfidf_vect_ngram.fit(trainDF['text'])
+   xtrain_tfidf_ngram =  tfidf_vect_ngram.transform(train_x)
+   xvalid_tfidf_ngram =  tfidf_vect_ngram.transform(valid_x)
+}}}
+
+c) *Character Level TF-IDF*: matrix representing tf-idf 
+   scores of character level n-grams in the corpus
+   
+{{{python
+   tfidf_vect_ngram_chars = TfidfVectorizer(analyzer='char', token_pattern=r'\w{1,}', ngram_range=(2,3), max_features=5000)
+   tfidf_vect_ngram_chars.fit(trainDF['text'])
+   xtrain_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(train_x) 
+   xvalid_tfidf_ngram_chars =  tfidf_vect_ngram_chars.transform(valid_x) 
+}}}
+
+
+== Word Embedding as features ==
+
+A word embedding is a form of representing words and documents using a dense 
+vector representation. The position of a word within the vector space is learned
+from text and is based on the words that surround the word when it is used.
+Word embeddings can be trained using the input corpus itself or can be generated
+using pre-trained word embeddings such as *Glove*, *FastText*, and *Word2Vec*
+
+There are four essential steps:
+
+    1. Loading the pretrained word embeddings
+    2. Creating a tokenizer object
+    3. Transforming text documents to sequence of tokens and pad them
+    4. Create a mapping of token and their respective embeddings
+
+{{{python
+    # load the pre-trained word-embedding vectors 
+    embeddings_index = {}
+    for i, line in enumerate(open('data/wiki-news-300d-1M.vec')):
+        values = line.split()
+        embeddings_index[values[0]] = numpy.asarray(values[1:], dtype='float32')
+
+    # create a tokenizer 
+    token = text.Tokenizer()
+    token.fit_on_texts(trainDF['text'])
+    word_index = token.word_index
+
+    # convert text to sequence of tokens and pad them to ensure equal length vectors 
+    train_seq_x = sequence.pad_sequences(token.texts_to_sequences(train_x), maxlen=70)
+    valid_seq_x = sequence.pad_sequences(token.texts_to_sequences(valid_x), maxlen=70)
+
+    # create token-embedding mapping
+    embedding_matrix = numpy.zeros((len(word_index) + 1, 300))
+    for word, i in word_index.items():
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None:
+            embedding_matrix[i] = embedding_vector
+}}}
+
+== Text/NLP based features ==
+
+A number of extra text based features can also be created which sometimes are 
+helpful for improving text classification models. Some examples are:
+
+    1. *Word Count of the documents* – total number of words in the documents
+    2. *Character Count of the documents* – total number of characters 
+    in the documents
+    3. *Average Word Density of the documents* – average length of the words 
+    used in the documents
+    4. *Punctuation Count in the Complete Essay* – total number of 
+    punctuation marks in the documents
+    5. *Upper Case Count in the Complete Essay* – total number of upper 
+    count words in the documents
+    6. *Title Word Count in the Complete Essay* – total number of proper 
+    case (title) words in the documents
+    7. *Frequency distribution of Part of Speech Tags*:
+        * Noun Count
+        * Verb Count
+        * Adjective Count
+        * Adverb Count
+        * Pronoun Count
+
+These features are highly experimental ones and should be used according 
+to the problem statement only.
+
+{{{python
+    trainDF['char_count'] = trainDF['text'].apply(len)
+    trainDF['word_count'] = trainDF['text'].apply(lambda x: len(x.split()))
+    trainDF['word_density'] = trainDF['char_count'] / (trainDF['word_count']+1)
+    trainDF['punctuation_count'] = trainDF['text'].apply(lambda x: len("".join(_ for _ in x if _ in string.punctuation))) 
+    trainDF['title_word_count'] = trainDF['text'].apply(lambda x: len([wrd for wrd in x.split() if wrd.istitle()]))
+    trainDF['upper_case_word_count'] = trainDF['text'].apply(lambda x: len([wrd for wrd in x.split() if wrd.isupper()]))
+    pos_family = {
+        'noun' : ['NN','NNS','NNP','NNPS'],
+        'pron' : ['PRP','PRP$','WP','WP$'],
+        'verb' : ['VB','VBD','VBG','VBN','VBP','VBZ'],
+        'adj' :  ['JJ','JJR','JJS'],
+        'adv' : ['RB','RBR','RBS','WRB']
+    }
+
+    # function to check and get the part of speech tag count of a words in a given sentence
+    def check_pos_tag(x, flag):
+        cnt = 0
+        try:
+            wiki = textblob.TextBlob(x)
+            for tup in wiki.tags:
+                ppo = list(tup)[1]
+                if ppo in pos_family[flag]:
+                    cnt += 1
+        except:
+            pass
+        return cnt
+
+    trainDF['noun_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'noun'))
+    trainDF['verb_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'verb'))
+    trainDF['adj_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'adj'))
+    trainDF['adv_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'adv'))
+    trainDF['pron_count'] = trainDF['text'].apply(lambda x: check_pos_tag(x, 'pron'))
+}}}
+
+== Topic Models as features ==
+
+TODO
+
+= Model Building =
+
+    The final step in the text classification framework is to train a
+    classifier using the features created in the previous step.
+    There are many different choices of machine learning models which 
+    can be used to train a final model:
+
+    1. Naive Bayes Classifier
+    2. Linear Classifier
+    3. Support Vector Machine
+    4. Bagging Models
+    5. Boosting Models
+    6. Shallow Neural Networks
+    7. Deep Neural Networks
+        * Convolutional Neural Network (CNN)
+        * Long Short Term Model (LSTM)
+        * Gated Recurrent Unit (GRU)
+        * Bidirectional RNN
+        * Recurrent Convolutional Neural Network (RCNN)
+        * Other Variants of Deep Neural Networks
+
+    This function will reduce amount of code
+{{{python
+    def train_model(classifier, feature_vector_train, label, feature_vector_valid, is_neural_net=False):
+        # fit the training dataset on the classifier
+        classifier.fit(feature_vector_train, label)
+        
+        # predict the labels on validation dataset
+        predictions = classifier.predict(feature_vector_valid)
+        
+        if is_neural_net:
+            predictions = predictions.argmax(axis=-1)
+        
+        return metrics.accuracy_score(predictions, valid_y)
+}}}
+
+== Naive Bayes ==
+
+    Naive Bayes is a classification technique based on Bayes’ Theorem 
+    with an assumption of independence among predictors.
+    
+{{{python
+    # Naive Bayes on Count Vectors
+    accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_count, train_y, xvalid_count)
+    print("NB, Count Vectors: ", accuracy)
+
+    # Naive Bayes on Word Level TF IDF Vectors
+    accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf, train_y, xvalid_tfidf)
+    print("NB, WordLevel TF-IDF: ", accuracy)
+
+    # Naive Bayes on Ngram Level TF IDF Vectors
+    accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
+    p# RF on Count Vectors
+accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_count, train_y, xvalid_count)
+print "RF, Count Vectors: ", accuracy
+
+# RF on Word Level TF IDF Vectors
+accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_tfidf, train_y, xvalid_tfidf)
+print "RF, WordLevel TF-IDF: ", accuracyrint("NB, N-Gram Vectors: ", accuracy)
+
+    # Naive Bayes on Character Level TF IDF Vectors
+    accuracy = train_model(naive_bayes.MultinomialNB(), xtrain_tfidf_ngram_chars, train_y, xvalid_tfidf_ngram_chars)
+    print("NB, CharLevel Vectors: ", accuracy)
+}}}
+
+== Linear Classifier ==
+
+Logistic regression measures the relationship between the categorical dependent
+variable and one or more independent variables by estimating probabilities 
+using a logistic/sigmoid function
+
+{{{python
+    # Linear Classifier on Count Vectors
+    accuracy = train_model(linear_model.LogisticRegression(), xtrain_count, train_y, xvalid_count)
+    print("LR, Count Vectors: ", accuracy)
+
+    # Linear Classifier on Word Level TF IDF Vectors
+    accuracy = train_model(linear_model.LogisticRegression(), xtrain_tfidf, train_y, xvalid_tfidf)
+    print("LR, WordLevel TF-IDF: ", accuracy)
+
+    # Linear Classifier on Ngram Level TF IDF Vectors
+    accuracy = train_model(linear_model.LogisticRegression(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
+    print("LR, N-Gram Vectors: ", accuracy)
+
+    # Linear Classifier on Character Level TF IDF Vectors
+    accuracy = train_model(linear_model.LogisticRegression(), xtrain_tfidf_ngram_chars, train_y, xvalid_tfidf_ngram_chars)
+    print("LR, CharLevel Vectors: ", accuracy)
+}}}
+
+== SVM model ==
+
+Support Vector Machine (SVM) is a supervised machine learning algorithm 
+which can be used for both classification or regression challenges.
+The model extracts a best possible hyper-plane that segregates the two classes
+
+{{{python
+    # SVM on Ngram Level TF IDF Vectors
+    accuracy = train_model(svm.SVC(), xtrain_tfidf_ngram, train_y, xvalid_tfidf_ngram)
+    print("SVM, N-Gram Vectors: ", accuracy)
+}}}
+
+== Bagging Model (Bootstrap Aggregation) ==
+
+Random Forest models are a type of ensemble models, particularly bagging models.
+They are part of the tree based model family.
+
+{{{python
+    # RF on Count Vectors
+    accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_count, train_y, xvalid_count)
+    print("RF, Count Vectors: ", accuracy)
+
+    # RF on Word Level TF IDF Vectors
+    accuracy = train_model(ensemble.RandomForestClassifier(), xtrain_tfidf, train_y, xvalid_tfidf)
+    print("RF, WordLevel TF-IDF: ", accuracy)
+}}}
+
+
+= Sources =
+-  https://www.analyticsvidhya.com/blog/2018/04/a-comprehensive-guide-to-understand-and-implement-text-classification-in-python/
