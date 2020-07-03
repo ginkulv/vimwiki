@@ -1,10 +1,5 @@
 [[TODO]]
 
-= Универ =
-
-[[БД]]
-[[МБП]]
-
 = Machine Learning =
 
 [[Text Classification]]
