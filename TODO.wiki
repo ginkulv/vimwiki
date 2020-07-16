@@ -2,9 +2,10 @@
 
 - [ ] Рихард Вагнер - "Тристан и Изольда"
 - [X] Bill Evans
+- [ ] Duke Ellington
 
 = Почитать =
 
-- [ ] UEIF, IEF
+- [X] UEIF, IEF
 - [X] swapfile vs swap partition
 - [ ] почему ram меняется
