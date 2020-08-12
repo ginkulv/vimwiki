@@ -9,3 +9,9 @@
 - [X] UEIF, IEF
 - [X] swapfile vs swap partition
 - [ ] почему ram меняется
+- [ ] maximum-likelihood 
+
+= Перевести =
+
+- [X] convolutional
+- [ ] inception
