@@ -1,6 +1,7 @@
 = Послушать = 
 
 - [ ] Рихард Вагнер - "Тристан и Изольда"
+- [X] Бела Барток
 - [X] Bill Evans
 - [ ] Duke Ellington
 
@@ -14,4 +15,4 @@
 = Перевести =
 
 - [X] convolutional
-- [ ] inception
+- [X] inception
