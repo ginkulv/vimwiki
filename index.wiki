@@ -5,3 +5,7 @@
 = Machine Learning =
 
 [[Text Classification]]
+
+== Optimizers ==
+
+Adam
