@@ -1,6 +1,8 @@
 [[TODO]]
 
-[[Практика]]
+= University =
+
+[[Нейронные сети]]
 
 = Machine Learning =
 
